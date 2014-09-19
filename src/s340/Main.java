@@ -36,9 +36,16 @@ public class Main
 		b1.subi(101);						// Acc -= 101
 		b1.jneg(pos);
 		
+		
+		
 			b1.loadi(10);
 			b1.addi(-2);		
-			b1.output();
+		//	b1.output();
+		
+		b1.jneg(5);
+		b1.jpos(6);
+		b1.jzero(6);
+		
 		
 		Program p1 = b1.build();
 		System.out.println(p1);
