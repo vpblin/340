@@ -20,53 +20,33 @@ public class Main
 		OperatingSystem os = new OperatingSystem(machine);
 		machine.powerUp(os);
 
+		// First test program.
+		// Stores 0, 2, 4, ... 38 into memory locations 200 through 219
+
 		ProgramBuilder b1 = new ProgramBuilder();
-		b1.loadi(0);			// Acc value
-		b1.store(100);			//store to mem 100
-		b1.load(100);			//acc is mem 100
-		b1.inca();				//incrememnt acc
-		b1.store(100);			//store acc to mem 100
-		b1.mul(100);			//multiply acc by content of 100
-		b1.store(101);			//store acc to mem 100
-		b1.add(102);  			//add mem 102
-		b1.store(102);			//store acc to mem 102
-		b1.load(100);			//acc equal mem 100
-		b1.subi(100);			//subtract 100 from acc
-		b1.jneg(4);				//if acc is neg go to mem 4
-		b1.load(102);			//acc is mem 102
-		b1.output();			//output acc
-		b1.end();
-		
-		
-		/*ProgramBuilder b2 = new ProgramBuilder();
-		b2.loadi(1);			// Mem[100] = J value
-		b2.store(100);			// Mem[102] = K value
-		// J-loop
-		b2.loadi(1);
-		b2.store(102);
-		// K-loop
-		b2.load(100);
-		b2.mul(102);
-		b2.output();
-		b2.load(102);
-		b2.inca();
-		b2.store(102);
-		b2.subi(6);
-		b2.jneg(8);
-		// end of K-loop
-		b2.load(100);
-		b2.inca();
-		b2.store(100);
-		b2.subi(6);
-		b2.jneg(4);
-		b2.end();*/
-		
-		Program p2 = b1.build();
-		//System.out.println(p2);
-		System.out.println(p2);
+		b1.loadi(0);						// ACC = 0
+		b1.store(0);						// Mem[0] = Acc = 0
+		b1.tax();							// X = Acc 0
+		int pos = b1.load(0);				// Acc = Mem[0]
+		b1.storex(200);						// Mem[X + 200] = Acc
+		b1.incx();							// X++
+		b1.inca();
+		b1.inca();							// ACC += 2
+		b1.store(0);						// Mem[0] = Acc
+		b1.subi(39);						// Acc -= 39
+		b1.jneg(pos);
+
+		for (int i = 200; i < 220; i++)
+		{
+			b1.load(i);
+			b1.output();
+		}
+
+		Program p1 = b1.build();
+		System.out.println(p1);
 
 		// schedule the program
 
-		os.schedule(p2);
+		os.schedule(p1);
 	}
 }

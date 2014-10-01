@@ -11,6 +11,9 @@ public class MemoryController implements IMemoryController
 {
 
 	private final int[] memory;
+	
+	private int base;
+	private int limit;
 
 	public MemoryController(int[] contents)
 	{
@@ -28,7 +31,7 @@ public class MemoryController implements IMemoryController
 
 	private void checkAddress(int address) throws MemoryAddressException
 	{
-		if (address < 0 || address >= memory.length)
+		if (address < this.base+this.limit || address >= this.base)
 		{
 			throw new MemoryAddressException(address);
 		}
@@ -41,7 +44,7 @@ public class MemoryController implements IMemoryController
 	@Override
 	public int load(int address) throws MemoryFault
 	{
-		checkAddress(address);
+		checkAddress(address+this.base);
 		return memory[address];
 	}
 
@@ -52,7 +55,7 @@ public class MemoryController implements IMemoryController
 	@Override
 	public void store(int address, int value) throws MemoryFault
 	{
-		checkAddress(address);
+		checkAddress(address+this.base);
 		memory[address] = value;
 	}
 

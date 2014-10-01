@@ -12,12 +12,14 @@ public class ProgramBuilder
 {
 
 	private final LinkedList<Integer> instructions;
+	private int start;
 	private int size;
 
 	public ProgramBuilder()
 	{
 		instructions = new LinkedList<>();
 		size = 0;
+		start = 0;
 	}
 
 	private void instruction(int opcode, int operand)
@@ -33,7 +35,7 @@ public class ProgramBuilder
 
 	private int S()
 	{
-		return instructions.size() - 2;
+		return instructions.size() - 2 + start;
 	}
 
 	public int load(int address)
@@ -174,6 +176,12 @@ public class ProgramBuilder
 		return S();
 	}
 
+	public int start(int start)
+	{
+		this.start = start;
+		return S();
+	}
+
 	public int size(int size)
 	{
 		this.size = size;
@@ -190,6 +198,6 @@ public class ProgramBuilder
 			code[j++] = i;
 		}
 
-		return new Program(code, size);
+		return new Program(code, start, size);
 	}
 }

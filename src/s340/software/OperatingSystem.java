@@ -23,6 +23,15 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler, I
 	// the currently running program
 
 	private Program currentProgram;
+	
+	private final int MAX_NUM_PROCESS = 4;
+	
+	private ProcessControlBlock[] process_table;
+	
+	private int running_process = -1;
+	
+	private Program p1;
+	
 
 	/*
 	 * Create an operating system on the given machine.
@@ -32,15 +41,25 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler, I
 	{
 		this.machine = machine;
 		currentProgram = null;
+		// array of process control blocks of size 4
+		
+		process_table = new ProcessControlBlock[MAX_NUM_PROCESS];
+		
+		ProgramBuilder wait = new ProgramBuilder();
+		wait.start(0);
+		wait.jmp(0);
+		p1 = wait.build();
+		loadProgram(p1);
 	}
 
 	/*
 	 * Load a program into a given memory address
 	 */
 
-	private int loadProgram(int startAddress, Program program) throws MemoryFault
+	private int loadProgram(Program program) throws MemoryFault
 	{
-		int address = startAddress;
+		int address = program.getStart();
+		
 		for (int i : program.getCode())
 		{
 			machine.memory.store(address++, i);
@@ -58,16 +77,62 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler, I
 
 	public void schedule(Program... programs) throws MemoryFault
 	{
-		int address = 0;
+		int i = 0;
 		for (Program program : programs)
 		{
-			address = loadProgram(address, program);
+			loadProgram(program);
+			process_table[i] = new ProcessControlBlock(0, program.getStart(), 0, ProcessState.READY);
+			i++;
 		}
-
-		currentProgram = programs[0];
 
 		// leave this as the last line
 		machine.cpu.runProg = true;
+	}
+	
+	// Uses Round Robin method to select new process
+	private void runNextProcess()
+	{
+		
+		for(int i = running_process+1; i < MAX_NUM_PROCESS; i++)
+		{
+			
+			if(process_table[i] != null && process_table[i].getStatus() == ProcessState.READY)
+			{
+				process_table[i].setStatus(ProcessState.RUNNING);
+				running_process = i;
+				return;
+			}
+		}
+		
+		for(int i = 0; i < MAX_NUM_PROCESS; i++)
+		{
+			
+			if(process_table[i] != null && process_table[i].getStatus() == ProcessState.READY)
+			{
+				process_table[i].setStatus(ProcessState.RUNNING);
+				running_process = i;
+				return;
+			}
+		}
+		
+		running_process = -1;
+	
+		
+	}
+	
+	// set the Acc, X, and PC registers from the PCB
+	private void setNextProcess()
+	{
+		if(running_process >= 0)
+		{
+			machine.cpu.acc = process_table[running_process].getAcc();
+			machine.cpu.x = process_table[running_process].getX();
+			machine.cpu.setPc(process_table[running_process].getPc());
+		}
+		else
+		{
+			machine.cpu.setPc(0);
+		}
 	}
 
 	/*
@@ -91,15 +156,35 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler, I
 		switch (trapNumber)
 		{
 			case Trap.TIMER:
-				if (currentProgram != null)
+				if(running_process == -1)
 				{
-					currentProgram = null;
-					machine.cpu.setPc(0);
+					runNextProcess();
+					setNextProcess();
+				}
+				else if(running_process >= 0 && process_table[running_process].getStatus() == ProcessState.RUNNING)
+				{
+					process_table[running_process].setPc(savedProgramCounter);
+					process_table[running_process].setAcc(machine.cpu.acc);
+					process_table[running_process].setX(machine.cpu.x);
+					process_table[running_process].setStatus(ProcessState.READY);
+					runNextProcess();
+					setNextProcess();
 				}
 				break;
 			case Trap.END:
-				System.exit(1);
+				if(running_process >= 0)
+				{
+					process_table[running_process].setStatus(ProcessState.TERMINATED);
+					runNextProcess();
+					setNextProcess();
+				}
+				else if(running_process == -1)
+				{
+					machine.cpu.setPc(0);
+				}
+				break;
 			default:
+				System.out.println(savedProgramCounter);
 				System.out.println("UNHANDLED TRAP " + trapNumber);
 				System.exit(1);
 		}
