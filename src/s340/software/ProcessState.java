@@ -4,6 +4,7 @@ public enum ProcessState {
 	
 	READY,
 	RUNNING,
-	TERMINATED
+	TERMINATED,
+	WAITING
 
 }

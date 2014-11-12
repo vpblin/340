@@ -1,5 +1,6 @@
 package s340.hardware;
 
+import s340.hardware.device.Console;
 import s340.software.OperatingSystem;
 
 /*
@@ -15,7 +16,8 @@ public class Machine
 
 	// device numbers
 
-	public final static int NUM_DEVICES = 0;
+	public final static int NUM_DEVICES = 1;
+	public final static int  CONSOLE = 0;
 
 	// the various pieces of hardware in a machine
 
@@ -54,7 +56,8 @@ public class Machine
 		// create the devices themselves
 
 		devices = new Device[NUM_DEVICES];
-
+		devices[CONSOLE] = new Console(CONSOLE, interruptRegisters, controlRegisters[CONSOLE]);
+		
 		// create the CPU
 
 		cpu = new CPU(interruptRegisters, memory);

@@ -7,13 +7,15 @@ import s340.hardware.exception.MemoryFault;
  * A basic memory controller.
  */
 
+// you must set your base and limit before calling functions
+
 public class MemoryController implements IMemoryController
 {
 
 	private final int[] memory;
 	
-	private int base;
-	private int limit;
+	private int base = 0;
+	private int limit = 0;
 
 	public MemoryController(int[] contents)
 	{
@@ -30,8 +32,8 @@ public class MemoryController implements IMemoryController
 	 */
 
 	private void checkAddress(int address) throws MemoryAddressException
-	{
-		if (address < this.base+this.limit || address >= this.base)
+	{		
+		if (address < 0 || address >= this.limit)
 		{
 			throw new MemoryAddressException(address);
 		}
@@ -44,8 +46,8 @@ public class MemoryController implements IMemoryController
 	@Override
 	public int load(int address) throws MemoryFault
 	{
-		checkAddress(address+this.base);
-		return memory[address];
+		checkAddress(address);
+		return memory[address+this.base];
 	}
 
 	/*
@@ -55,8 +57,18 @@ public class MemoryController implements IMemoryController
 	@Override
 	public void store(int address, int value) throws MemoryFault
 	{
-		checkAddress(address+this.base);
-		memory[address] = value;
+		checkAddress(address);
+		memory[address+this.base] = value;
+	}
+	
+	public void setBase(int base)
+	{
+		this.base = base;
+	}
+	
+	public void setLimit(int limit)
+	{
+		this.limit = limit;
 	}
 
 }

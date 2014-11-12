@@ -13,4 +13,8 @@ public interface IMemoryController
 
 	void store(int address, int value) throws MemoryFault;
 
+	void setBase(int base);
+
+	void setLimit(int limit);
+
 }
