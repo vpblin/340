@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import s340.hardware.DeviceControllerOperations;
 import s340.hardware.IInterruptHandler;
 import s340.hardware.ISystemCallHandler;
 import s340.hardware.ITrapHandler;
@@ -121,7 +122,7 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 		// leave this as the last line
 		machine.cpu.runProg = true;
 
-		diagnostic();
+		//diagnostic();
 	}
 
 	// Uses Round Robin method to select new process
@@ -289,7 +290,8 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 	// saves state of current process
 	public void savestate(int savedProgramCounter)
 	{
-		if(running_process >= 0){
+		if(running_process > -1)
+		{
 			process_table[running_process].setPc(savedProgramCounter);
 			process_table[running_process].setAcc(machine.cpu.acc);
 			process_table[running_process].setX(machine.cpu.x);
@@ -327,8 +329,28 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 			if(device_q[machine.CONSOLE].size() == 1)
 			{
 				write_console();
-				System.out.println(device_q[machine.CONSOLE]);
-
+			}
+			runNextProcess();
+			setNextProcess();
+			break;
+		case SystemCall.READ:
+			savestate(savedProgramCounter);
+			device_q[machine.DISK].add(new IORequest(running_process, callNumber));
+			process_table[running_process].setStatus(ProcessState.WAITING);
+			if(device_q[machine.DISK].size() == 1)
+			{
+				read_disk();
+			}
+			runNextProcess();
+			setNextProcess();
+			break;
+		case SystemCall.WRITE:
+			savestate(savedProgramCounter);
+			device_q[machine.DISK].add(new IORequest(running_process, callNumber));
+			process_table[running_process].setStatus(ProcessState.WAITING);
+			if(device_q[machine.DISK].size() == 1)
+			{
+				write_disk();
 			}
 			runNextProcess();
 			setNextProcess();
@@ -345,6 +367,49 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 	{
 		machine.devices[machine.CONSOLE].controlRegister.register[1] = process_table[device_q[machine.CONSOLE].getFirst().getProcessNumber()].getAcc();
 		machine.devices[machine.CONSOLE].controlRegister.startOperation();
+	}
+	
+	// read disk call
+	public void read_disk()
+	{
+		int index = process_table[device_q[machine.DISK].getFirst().getProcessNumber()].getAcc();
+		machine.devices[machine.DISK].controlRegister.register[0] = DeviceControllerOperations.READ;
+		try {
+			machine.memory.setBase(process_table[device_q[machine.DISK].getFirst().getProcessNumber()].getBase());
+			machine.memory.setLimit(process_table[device_q[machine.DISK].getFirst().getProcessNumber()].getLimit());
+			machine.devices[machine.DISK].controlRegister.register[1] = machine.memory.load(index);
+			machine.devices[machine.DISK].controlRegister.register[2] = machine.memory.load(index+1);
+			machine.devices[machine.DISK].controlRegister.register[3] = machine.memory.load(index+2);
+
+		} catch (MemoryFault e) {
+			e.printStackTrace();
+		}
+		machine.devices[machine.DISK].controlRegister.startOperation();
+
+	}
+	
+	// write disk call
+	public void write_disk()
+	{
+		int index = process_table[device_q[machine.DISK].getFirst().getProcessNumber()].getAcc();
+		machine.devices[machine.DISK].controlRegister.register[0] = DeviceControllerOperations.WRITE;
+		try {
+			machine.memory.setBase(process_table[device_q[machine.DISK].getFirst().getProcessNumber()].getBase());
+			machine.memory.setLimit(process_table[device_q[machine.DISK].getFirst().getProcessNumber()].getLimit());
+			machine.devices[machine.DISK].controlRegister.register[1] = machine.memory.load(index);
+			machine.devices[machine.DISK].controlRegister.register[2] = machine.memory.load(index+1);
+			machine.devices[machine.DISK].controlRegister.register[3] = machine.memory.load(index+2);
+			int start = machine.memory.load(index+3);
+			for(int i = 0; i < machine.memory.load(index+2); i++)
+			{
+				machine.devices[machine.DISK].buffer[i] = machine.memory.load(start);
+				start++;
+			}
+
+		} catch (MemoryFault e) {
+			e.printStackTrace();
+		}
+		machine.devices[machine.DISK].controlRegister.startOperation();
 	}
 
 	public void sbrk(int spacesNeeded) {
@@ -499,14 +564,57 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 		if (!machine.cpu.runProg) {
 			return;
 		}
+		// save status and unflag interrupt register
+		savestate(savedProgramCounter);
+		machine.interruptRegisters.register[deviceNumber] = false;
+		
+		// remove IO and set status
+		IORequest oldHead = device_q[deviceNumber].removeFirst();
+		process_table[oldHead.getProcessNumber()].setStatus(ProcessState.READY);
+		
 		if(deviceNumber == machine.CONSOLE)
 		{
-			savestate(savedProgramCounter);
-			process_table[device_q[machine.CONSOLE].peekFirst().getProcessNumber()].setStatus(ProcessState.READY);
-			device_q[machine.CONSOLE].removeFirst();
-			if(!device_q[machine.CONSOLE].isEmpty())
+			
+			// run next IO
+			if(!device_q[deviceNumber].isEmpty())
 			{
 				write_console();
+			}
+			setNextProcess();
+			return;
+		}
+		if(deviceNumber == machine.DISK)
+		{
+						
+			// if read, store buffer into memory
+			if(oldHead.getSystemCall() == SystemCall.READ)
+			{
+				int ourAcc = process_table[oldHead.getProcessNumber()].getAcc();
+				machine.memory.setBase(process_table[oldHead.getProcessNumber()].getBase());
+				machine.memory.setLimit(process_table[oldHead.getProcessNumber()].getLimit());
+				try {
+					int start = machine.memory.load(ourAcc+3);
+					for(int i = 0; i < machine.memory.load(ourAcc+2); i++)
+					{
+						machine.memory.store(start, machine.devices[deviceNumber].buffer[i]);
+						start++;
+					}
+				} catch (MemoryFault e) {
+					e.printStackTrace();
+				}
+			}
+			
+			// run next IO
+			if(!device_q[deviceNumber].isEmpty())
+			{
+				if(device_q[deviceNumber].getFirst().getSystemCall() == SystemCall.READ)
+				{
+					read_disk();
+				}
+				else
+				{
+					write_disk();
+				}
 			}
 			setNextProcess();
 			return;

@@ -6,7 +6,9 @@ package s340.software;
 
 public class SystemCall
 {
-	public final static int NUM_SYSTEM_CALLS = 2;
+	public final static int NUM_SYSTEM_CALLS = 4;
+	public final static int WRITE = 3;
+	public final static int READ = 2;
 	public final static int WRITE_CONSOLE = 1;
 	public final static int SBRK = 0;
 
