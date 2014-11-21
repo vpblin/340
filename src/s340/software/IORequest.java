@@ -27,5 +27,8 @@ public class IORequest {
 		this.systemCall = systemCall;
 	}
 
-	
+	public String toString() {
+		return ("Process : " + processNumber + "systemCall : " + systemCall);
+	}
+
 }

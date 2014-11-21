@@ -121,7 +121,7 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 		machine.memory.setLimit(4);
 		// leave this as the last line
 		machine.cpu.runProg = true;
-
+		System.out.println("Schedule report");
 		diagnostic();
 	}
 
@@ -360,6 +360,8 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 			System.exit(1);
 
 		}
+		System.out.println("Syscall report");
+		diagnostic();
 	}
 	
 	// write console call
@@ -547,6 +549,13 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 
 		}
 		System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++");
+		
+		System.out.println("+++++++++++++++++++++IO Requests +++++++++++++++++++++++++++++");
+		for(int i = 0; i < device_q.length; i++){
+			System.out.println("Queue : " + device_q[i].toString());		
+		}
+		System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++");
+
 	}
 
 	/*
@@ -560,6 +569,9 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 
 	@Override
 	public void interrupt(int savedProgramCounter, int deviceNumber) {
+		System.out.println("Interrupt Report");
+		diagnostic();
+
 		CheckValid.deviceNumber(deviceNumber);
 		if (!machine.cpu.runProg) {
 			return;
