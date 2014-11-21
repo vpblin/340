@@ -122,7 +122,7 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 		// leave this as the last line
 		machine.cpu.runProg = true;
 
-		//diagnostic();
+		diagnostic();
 	}
 
 	// Uses Round Robin method to select new process
