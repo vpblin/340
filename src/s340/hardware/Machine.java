@@ -13,13 +13,17 @@ public class Machine
 
 	// memory size
 
-	public final static int MEMORY_SIZE = 1000;
+	public final static int MEMORY_SIZE = 10000;
 
 	// device numbers
 
-	public final static int NUM_DEVICES = 2;
+	public final static int NUM_DEVICES = 3;
+	public final static int DISKTWO = 2;
 	public final static int DISK = 1;
 	public final static int  CONSOLE = 0;
+	
+	// buffer for disk 2
+	public final static int BUFFER = 10;
 
 	// the various pieces of hardware in a machine
 
@@ -60,6 +64,7 @@ public class Machine
 		devices = new Device[NUM_DEVICES];
 		devices[CONSOLE] = new Console(CONSOLE, interruptRegisters, controlRegisters[CONSOLE]);
 		devices[DISK] = new Disk(DISK, interruptRegisters, controlRegisters[DISK], new int[Disk.PLATTER_SIZE]);
+		devices[DISKTWO] = new Disk(DISKTWO, interruptRegisters, controlRegisters[DISKTWO], new int[BUFFER]);
 		
 		// create the CPU
 

@@ -4,14 +4,12 @@ import s340.hardware.Machine;
 import s340.software.OperatingSystem;
 import s340.software.Program;
 import s340.software.ProgramBuilder;
+import s340.software.SystemCall;
 
 public class Project_3_Programs {
 
 	public static void main(String[] args) throws Exception {
 		
-//		setup the hardware, the operating system, and power up
-			//	do not remove this
-
 		Machine machine = new Machine();
 		OperatingSystem os = new OperatingSystem(machine);
 		machine.powerUp(os);
@@ -19,98 +17,50 @@ public class Project_3_Programs {
 		//p1
 	
 		ProgramBuilder b1 = new ProgramBuilder();
-		
-		b1.loadi(200);
-		b1.syscall(0);
-		b1.loadi(1);
-		b1.store(40);
-		b1.store(41);
-		b1.store(42);
-		b1.store(43);
-		b1.store(44);
-		b1.load(40);
-
-		b1.syscall(1);
-		b1.load(41);
-
-		b1.syscall(1);
-		b1.load(42);
-
-		b1.syscall(1);
-		b1.load(43);
-
-		b1.syscall(1);
-		b1.load(44);
-
-		b1.syscall(1);
-
-
+		b1.size(1000);
+		for(int i = 1; i < 41; i++)
+		{
+			b1.loadi(i);
+			b1.store(i+500);
+		}
+		//write 
+		b1.loadi(Machine.DISKTWO);
+		b1.store(900);
+		b1.loadi(6);
+		b1.store(901);
+		b1.loadi(31);
+		b1.store(902);
+		b1.loadi(40);
+		b1.store(903);
+		b1.loadi(501);
+		b1.store(904);
+		b1.loadi(900);
+		b1.syscall(SystemCall.WRITE);
+		//read Accumulator values
+		b1.loadi(Machine.DISKTWO);
+		b1.store(900);
+		b1.loadi(6);
+		b1.store(901);
+		b1.loadi(31);
+		b1.store(902);
+		b1.loadi(40);
+		b1.store(903);
+		b1.loadi(401);
+		b1.store(904);
+		b1.loadi(900);
+		b1.syscall(SystemCall.READ);
+		//write console
+		for(int i = 1; i < 41; i++)
+		{
+			b1.load(400+i);
+			b1.syscall(SystemCall.WRITE_CONSOLE);
+		}
 		
 		Program p1 = b1.build();
-		
-		//p2
-		
-		ProgramBuilder b2 = new ProgramBuilder();
-		
-		b2.loadi(200);
-		b2.syscall(0);
-		b2.loadi(2);
-		b2.store(40);
-		b2.store(41);
-		b2.store(42);
-		b2.store(43);
-		b2.store(44);
-		b2.load(40);
-		b2.syscall(1);
-		b2.load(41);
-		b2.syscall(1);
-		b2.load(42);
-		b2.syscall(1);
-		b2.load(43);
 
-		b2.syscall(1);
-		b2.load(44);
-
-		b2.syscall(1);
+		System.out.println(p1);
 		
-		Program p2 = b2.build();
-		
-		
-		//p3
-		
-		ProgramBuilder b3 = new ProgramBuilder();
-		
-		b3.loadi(200);
-		b3.syscall(0);
-		b3.loadi(3);
-		b3.store(40);
-		b3.store(41);
-		b3.store(42);
-		b3.store(43);
-		b3.store(44);
-		b3.load(40);
-
-		b3.syscall(1);
-		b3.load(41);
-
-		b3.syscall(1);
-		b3.load(42);
-
-		b3.syscall(1);
-		b3.load(43);
-
-		b3.syscall(1);
-		b3.load(44);
-
-		b3.syscall(1);
-
-		
-		Program p3 = b3.build();
-
-		
-		
-		
-		os.schedule(p1, p2, p3);
+		os.schedule(p1);
 	}
 
 }

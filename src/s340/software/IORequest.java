@@ -4,11 +4,19 @@ public class IORequest {
 	
 	private int processNumber;
 	private int systemCall;
+	private int diskLength;
 	
 	public IORequest(int pnumber, int scall)
 	{
 		this.processNumber = pnumber;
 		this.systemCall = scall;
+	}
+	
+	public IORequest(int pnumber, int scall, int diskLength)
+	{
+		this.processNumber = pnumber;
+		this.systemCall = scall;
+		this.diskLength = diskLength;
 	}
 
 	public int getProcessNumber() {
@@ -27,8 +35,12 @@ public class IORequest {
 		this.systemCall = systemCall;
 	}
 
-	public String toString() {
-		return ("Process : " + processNumber + "systemCall : " + systemCall);
+	public int getDiskLength() {
+		return diskLength;
 	}
 
+	public void setDiskLength(int diskLength) {
+		this.diskLength = diskLength;
+	}
+	
 }
