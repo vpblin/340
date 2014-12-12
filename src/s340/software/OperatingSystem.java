@@ -336,12 +336,7 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 			savestate(savedProgramCounter);
 			try {
 				int device = machine.memory.load(process_table[running_process].getAcc());
-				if (device == 1)
-				{
-					device_q[device].add(new IORequest(running_process, callNumber));
-				} else {
-					device_q[device].add(new IORequest(running_process, callNumber, machine.memory.load(process_table[running_process].getAcc()+3)));
-				}
+				device_q[device].add(new IORequest(running_process, callNumber, machine.memory.load(process_table[running_process].getAcc()+2), machine.memory.load(process_table[running_process].getAcc()+3)));
 				process_table[running_process].setStatus(ProcessState.WAITING);
 				if(device_q[device].size() == 1)
 				{
@@ -357,12 +352,7 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 			savestate(savedProgramCounter);
 			try {
 				int device = machine.memory.load(process_table[running_process].getAcc());
-				if (device == 1)
-				{
-					device_q[device].add(new IORequest(running_process, callNumber));
-				} else {
-					device_q[device].add(new IORequest(running_process, callNumber, machine.memory.load(process_table[running_process].getAcc()+3)));
-				}
+				device_q[device].add(new IORequest(running_process, callNumber, machine.memory.load(process_table[running_process].getAcc()+2), machine.memory.load(process_table[running_process].getAcc()+3)));
 				process_table[running_process].setStatus(ProcessState.WAITING);
 				if(device_q[device].size() == 1)
 				{
@@ -600,6 +590,22 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 		System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++");
 	}
 
+	public void sstf(int device, int start)
+	{
+		int nextRequest = 0;
+		int gap = Math.abs(start - device_q[device].getFirst().getStart());
+		for(int i = 0; i < device_q[device].size(); i++)
+		{
+			int newgap = Math.abs(device_q[device].get(i).getStart() - start);
+			if(Math.abs(device_q[device].get(i).getStart() - start) < gap)
+			{
+				gap = newgap;
+				nextRequest = i;
+			}
+		}
+		device_q[device].addFirst(device_q[device].remove(nextRequest));
+	}
+	
 	/*
 	 * Handle an interrupt from the hardware.
 	 * 
@@ -654,9 +660,14 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 				}
 			}
 			
+			
 			// run next IO
 			if(!device_q[deviceNumber].isEmpty())
 			{
+				// adjust the head's start
+				oldHead.setStart(oldHead.getStart() + oldHead.getDiskLength());
+				// sstf disk ordering
+				sstf(deviceNumber, oldHead.getStart());
 				if(device_q[deviceNumber].getFirst().getSystemCall() == SystemCall.READ)
 				{
 					read_disk(deviceNumber);
@@ -696,7 +707,7 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 				}
 			}
 			
-			// adjust length of read/write
+			// adjust length of read/write and start
 			oldHead.setDiskLength(oldHead.getDiskLength() - machine.devices[deviceNumber].buffer.length);
 			
 			// if not done, add to the end of que
@@ -704,11 +715,14 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 			{
 				process_table[oldHead.getProcessNumber()].setStatus(ProcessState.WAITING);
 				device_q[deviceNumber].add(oldHead);
+				oldHead.setStart(oldHead.getStart()+machine.devices[deviceNumber].buffer.length);
 			}
 			
 			// run next IO
 			if(!device_q[deviceNumber].isEmpty())
 			{
+				// sstf disk ordering
+				sstf(deviceNumber, oldHead.getStart());
 				if(device_q[deviceNumber].getFirst().getSystemCall() == SystemCall.READ)
 				{
 					read_disk(deviceNumber);
