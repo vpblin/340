@@ -588,6 +588,12 @@ public class OperatingSystem implements IInterruptHandler, ISystemCallHandler,
 
 		}
 		System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++");
+		
+		System.out.println("+++++++++++++++++++++IO Requests +++++++++++++++++++++++++++++");
+				for(int i = 0; i < device_q.length; i++){
+					System.out.println("Queue : " + device_q[i].toString());		
+				}
+				System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++");
 	}
 
 	public void sstf(int device, int start)
