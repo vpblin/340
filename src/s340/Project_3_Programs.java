@@ -68,7 +68,25 @@ public class Project_3_Programs {
 			b1.load(400+i);
 			b1.syscall(SystemCall.WRITE_CONSOLE);
 		}
+		int z = 1;
+		int t = 0;
+		b1.load(400+40);
+		b1.syscall(SystemCall.WRITE_CONSOLE);
+
+		while(z != 42 && t < 2000)
+		{	
+			
+			b1.load(400+z);
+			b1.syscall(SystemCall.WRITE_CONSOLE);
+			if(z < 20){
+				z++;
+			}else{
+				z--;
+			}
+			t++;
+		}
 		
+
 		Program p1 = b1.build();
 
 		System.out.println(p1);
@@ -96,6 +114,21 @@ public class Project_3_Programs {
 		b2.store(904);
 		b2.loadi(900);
 		b2.syscall(SystemCall.WRITE);
+		for(int i = 0; i < 7; i++){
+			b2.loadi(Machine.DISKTWO);
+			b2.store(900);
+			b2.loadi(6);
+			b2.store(901);
+			b2.loadi(31);
+			b2.store(902);
+			b2.loadi(40);
+			b2.store(903);
+			b2.loadi(501);
+			b2.store(904);
+			b2.loadi(900);
+	
+			b2.syscall(SystemCall.WRITE);
+		}
 		b2.loadi(Machine.DISKTWO);
 		b2.store(900);
 		b2.loadi(6);
